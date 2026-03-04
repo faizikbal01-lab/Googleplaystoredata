@@ -95,8 +95,79 @@ The analysis is based on the publicly available Google Play Store dataset (`goog
 3. **Add the Dataset:** Place `googleplaystore.csv` in the root project directory (same level as the notebook).
 
 4. **Open the Notebook:** Run `googleplaystoredaTA.ipynb` cell by cell to reproduce the full cleaning pipeline, analysis, and visualizations.
-
+   
 ---
+
+## Recommendations for GitHub Upload
+
+Before publishing this project to GitHub, the following improvements are recommended to maximise usability, reproducibility, and professional quality.
+
+### 1. Data Quality & Cleaning
+
+- **Remove or quarantine the `Category == '1.9'` row explicitly:** Rather than relying on users to remember this anomaly, add a dedicated cleaning step at the top of the notebook that drops misaligned rows and logs how many were removed. Document the known cause (CSV row-shift in the original file) in a comment.
+- **Handle `"Free"` in the `Installs` column defensively:** The current `clean_installs()` function handles this as a special case. Extend it to catch any non-numeric string that may appear in numeric columns, and add a summary of how many rows were coerced or dropped during each cleaning step.
+- **Standardise `"Varies with device"` handling across columns:** This placeholder appears in `Size`, `Android Ver`, and `Current Ver`. Ensure all three are mapped to `NaN` consistently, and document the proportion of records affected per column — it may be material for `Android Ver` analyses.
+- **Parse `Last Updated` as a datetime:** Currently stored as a raw string. Converting it to `datetime` enables recency analysis (e.g. are recently updated apps rated higher?) and makes the column usable in time-series or filtering operations without extra work for downstream users.
+- **Cap or flag outlier ratings:** The Play Store dataset is known to contain ratings above 5.0 due to data entry errors. Add a validation step that flags or drops any `Rating` value outside the `[1.0, 5.0]` range before computing means or distributions.
+- **Deduplicate app records:** The dataset contains duplicate `App` entries (same app name, different records). Decide on a deduplication strategy (e.g. keep the most-installed record, or keep all) and document it clearly, as duplicates can skew category-level averages.
+
+### 2. Repository Structure
+
+- **Do not commit `googleplaystore.csv` directly to the repo** if it is large (it is ~6 MB). Instead, add a download instruction pointing to the original Kaggle source, or use a `data/` folder with a `README.md` explaining where to obtain it:
+
+  ```
+  data/
+  └── README.md   # Instructions: download from https://www.kaggle.com/datasets/lava18/google-play-store-apps
+  ```
+
+- **Adopt a standard project layout:**
+
+  ```
+  ├── data/
+  │   ├── raw/                  # Original googleplaystore.csv (or download instructions)
+  │   └── processed/            # Cleaned dataset after pipeline runs
+  ├── notebooks/
+  │   └── googleplaystoredaTA.ipynb
+  ├── src/                      # Reusable helper functions (clean_size, clean_installs, clean_reviews)
+  │   └── cleaning.py
+  ├── outputs/
+  │   └── size_distribution.png # Saved matplotlib charts
+  └── README.md
+  ```
+
+- **Fix the notebook filename casing:** `googleplaystoredaTA.ipynb` has inconsistent capitalisation. Rename it to `google_playstore_eda.ipynb` or similar for professionalism and cross-platform compatibility (Linux filesystems are case-sensitive).
+- **Add a `.gitignore`:** Exclude `__pycache__/`, `.ipynb_checkpoints/`, `*.pyc`, and any local virtual environment folders.
+
+### 3. Documentation
+
+- **Add a `requirements.txt`:** Pin the exact versions used so the notebook is reproducible across machines:
+
+  ```
+  pandas==2.x.x
+  numpy==1.x.x
+  matplotlib==3.x.x
+  ```
+
+- **Document all cleaning functions inline:** `clean_size()`, `clean_installs()`, and `clean_reviews()` are core to this project. Add docstrings explaining inputs, outputs, edge cases handled, and any values mapped to `NaN`.
+- **Add a cleaned dataset export step:** At the end of the cleaning pipeline, save the processed DataFrame to `data/processed/googleplaystore_clean.csv` so users who only want the clean data do not need to re-run the full notebook.
+- **Save visualisations as image files:** The current histogram is rendered inline. Add `plt.savefig('outputs/size_distribution.png', dpi=150, bbox_inches='tight')` before `plt.show()` so charts are available in the repo for README previews and reports.
+- **Embed a chart preview in the README:** Reference the saved histogram image directly in the README with `![App Size Distribution](outputs/size_distribution.png)` to make the project visually engaging on GitHub.
+
+### 4. Ethics, Privacy & Attribution
+
+- **Cite the original dataset source:** The dataset is publicly available on Kaggle. Add the full attribution:
+  > Lavanya M. (2019). *Google Play Store Apps.* Kaggle. Available at: https://www.kaggle.com/datasets/lava18/google-play-store-apps
+- **Note the dataset's age:** The Kaggle dataset was scraped in 2018–2019. App market conditions have changed significantly since then — add a visible warning in the README and at the top of the notebook that findings reflect a historical snapshot and should not be used for current market strategy without refreshed data.
+- **Add a `LICENSE` file:** For an analytical/educational project, an **MIT License** for the code and notebooks is standard. Since the underlying dataset is third-party, note clearly that the license covers only your analysis code, not the raw data itself.
+
+### 5. Analysis Quality Improvements
+
+- **Report the mean rating with context:** The mean Play Store rating is well-known to be inflated (~4.17) due to survivorship bias (low-rated apps get delisted). Add a note on this limitation alongside the mean value.
+- **Extend the top-apps analysis beyond top 5:** The top 5 most-installed apps are dominated by Google's own pre-installed applications. Consider filtering out system/pre-installed apps (identifiable by developer name or `Category == 'COMMUNICATION'` + very high installs) to surface the most-installed third-party apps — a more useful competitive benchmark.
+- **Add a category-level summary table:** A grouped DataFrame showing, per category: app count, mean rating, median installs, and Free/Paid split would be a high-value addition that many GitHub users look for in Play Store EDA projects.
+- **Quantify the data quality issues:** Rather than describing anomalies in prose, add a dedicated "Data Quality Report" cell in the notebook that prints: total rows, rows dropped per cleaning step, columns with null percentages, and any values coerced. This builds credibility and transparency.
+- **Consider adding a correlation analysis:** Explore whether `Size`, `Reviews`, `Installs`, or `Last Updated` recency correlate with `Rating`. Even a simple correlation matrix would add analytical depth and is straightforward to implement with `df.corr()`.
+
 
 ## Author
 
