@@ -77,24 +77,6 @@ The analysis is based on the publicly available Google Play Store dataset (`goog
 - **Data quality issues are present in the raw dataset** — including a row where `Category` contains the numeric value `'1.9'`, indicating a row misalignment in the original CSV that must be excluded before analysis.
 - **Installs data required extensive cleaning** — raw values were stored as formatted strings (e.g., `"10,000+"`) and a special case where `"Free"` appeared in the Installs column had to be handled explicitly, underscoring the importance of robust data cleaning pipelines before any analysis.
 - **High-rated apps (≥ 4.0) form a strong subset** of the catalogue, providing a clean pool for benchmarking quality standards, feature patterns, and category-level performance comparisons.
-
----
-
-## How to Run
-
-1. **Clone the Repository:**
-   ```bash
-   git clone <your-repo-url>
-   ```
-
-2. **Install Dependencies:**
-   ```bash
-   pip install pandas numpy matplotlib
-   ```
-
-3. **Add the Dataset:** Place `googleplaystore.csv` in the root project directory (same level as the notebook).
-
-4. **Open the Notebook:** Run `googleplaystoredaTA.ipynb` cell by cell to reproduce the full cleaning pipeline, analysis, and visualizations.
    
 ---
 
